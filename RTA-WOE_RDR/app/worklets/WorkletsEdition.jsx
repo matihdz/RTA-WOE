@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Spinner from "../components/Spinner";
 import CriteriaInput from "../components/CriteriaInput";
 import { useModal } from "../context/ModalContext";
@@ -135,29 +135,8 @@ const RuleForm = ({ rule, disabled = false }) => {
   );
 };
 
-const WorkletsEdition = ({ RuleID = "", disabled = false, activityToken = null }) => {
-  const [rule, setRule] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!RuleID) return;
-
-    const getData = async () => {
-      const query = await fetch(`https://6bvtk82sog.execute-api.us-east-1.amazonaws.com/rules/${RuleID}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await query.json();
-      if (data && data.RuleID) setRule({ ...data, activityToken });
-      setLoading(false);
-    };
-    getData();
-  }, [RuleID]);
-
-  return <div>{loading ? <Spinner /> : rule ? <RuleForm rule={rule} disabled={disabled} /> : <div>Rule not found</div>}</div>;
+const WorkletsEdition = ({ data, props = { disabled: false } }) => {
+  return data ? <RuleForm rule={data} disabled={props.disabled} /> : <div>Rule not found</div>;
 };
 
 export default WorkletsEdition;

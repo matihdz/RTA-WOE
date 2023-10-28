@@ -74,7 +74,7 @@ const Table = ({ refreshFn, data = [], columns, classNameMaxWidth = "", onRowCli
                   refreshFn();
                   if (id) setLastRefresh(getOrloadOnLocalStorage(`table-${id}-lastRefresh`, new Date().getTime()));
                   setLoading(false);
-                }, 1500);
+                }, 500);
               }}
               className="group flex items-center cursor-pointer w-max bg-blue-500  text-white font-bold py-2 px-4 rounded-t-sm"
             >

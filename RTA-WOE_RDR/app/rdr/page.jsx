@@ -30,22 +30,6 @@ const page = () => {
     return data;
   };
 
-  const getActivityTokenData = async () => {
-    const query = await fetch("https://h4f6p1mxu7.execute-api.us-east-1.amazonaws.com/activities/token", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await query.json();
-
-    if (data && typeof data === "string") {
-      getOrloadOnLocalStorage("activityToken", data);
-    }
-
-    return data;
-  };
-
   return (
     <div className="p-4 flex flex-col justify-center items-center">
       <Table
@@ -81,14 +65,11 @@ const page = () => {
             label: "Acciones",
             actions: (data) => {
               let actions = [];
-              if (data.Status == "Pending") {
+              if (data.Status == "Pending" && data.ActionToken) {
                 actions.push({
                   label: "Asociar Worklet",
-                  onClick: async () => {
-                    let token = await getActivityTokenData();
-                    if (!token) return alert("No se pudo obtener un Activity Token.");
-
-                    setModalConfig({ isOpen: true, componentName: "WorkletsEdition", componentProps: { RuleID: data.RuleID, activityToken: token } });
+                  onClick: () => {
+                    setModalConfig({ isOpen: true, componentName: "WorkletsEdition", componentProps: { data: data, props: { disabled: false } } });
                   },
                 });
               }
