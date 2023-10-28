@@ -4,7 +4,7 @@
   "description": "Intermediary System canvaslms-stepfunctions",
   "main": "app.js",
   "scripts": {
-    "start": "node app"
+    "dev": "node app"
   },
   "dependencies": {
     "aws-sdk": "^2.1480.0",

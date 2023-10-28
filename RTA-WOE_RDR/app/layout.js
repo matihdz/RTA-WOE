@@ -5,13 +5,6 @@ import { Inter } from "next/font/google";
 import { AuthContextProvider, UserAuth } from "./context/AuthContext";
 import { ModalContextProvider, useModal } from "./context/ModalContext";
 import Modal from "./components/Modal";
-import AWS from 'aws-sdk';
-
-AWS.config.update({
-  accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-  region: process.env.NEXT_PUBLIC_AWS_REGION,
-});
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +20,7 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <ModalContextProvider>
           <AuthContextProvider>
-            <App children={children} AWS={AWS}/>
+            <App children={children}/>
           </AuthContextProvider>
         </ModalContextProvider>
       </body>
