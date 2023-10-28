@@ -37,7 +37,7 @@ const page = () => {
         data={RDRs}
         refreshFn={getRDRsData}
         onRowClick={(data) => {
-          setModalConfig({ isOpen: true, componentName: "WorkletsEdition", componentProps: { RuleID: data.RuleID, disabled: true } });
+          setModalConfig({ isOpen: true, componentName: "WorkletsEdition", componentProps: { data: data, props: { disabled: true } } });
         }}
         columns={[
           {
