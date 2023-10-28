@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 249, 250, 251; /* Este color es más cercano al bg-gray-50 de Tailwind */
+  --background-end-rgb: 255, 255, 255;
+  --button-blue: 96, 165, 250; /* Azul más claro */
+  --button-green: 72, 187, 120; /* Verde más claro */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 31, 41, 55; /* Un fondo oscuro más suave para el modo oscuro */
+    --background-end-rgb: 31, 41, 55;
+    --button-blue: 79, 129, 229;
+    --button-green: 52, 168, 83;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+  font-family: "Inter", sans-serif;
+}
+
+/* Botones */
+button {
+  background-color: rgb(var(--button-blue));
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-align: center;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button:hover {
+  background-color: rgba(var(--button-blue), 0.9);
+}
+
+/* Para el botón verde de Registrarme */
+button.green {
+  background-color: rgb(var(--button-green));
+}
+
+button.green:hover {
+  background-color: rgba(var(--button-green), 0.9);
+}
+
+.spin-animation {
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
