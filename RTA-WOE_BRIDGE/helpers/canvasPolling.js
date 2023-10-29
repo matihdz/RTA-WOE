@@ -6,9 +6,6 @@ const canvaslmsToken = process.env.CANVASLMS_TOKEN;
 
 const canvasPolling = async (tag) => {
   // Realizar el polling a la API de CanvasLMS hasta obtener el resultado deseado
-
-  if (!pollingSteps.includes(tag)) return null;
-
   switch (tag) {
     case "crear_actividad":
       let intervalId = setInterval(() => {

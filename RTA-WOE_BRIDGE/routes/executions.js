@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { createExecution } = require("../controllers/posts");
+const { createExecution } = require("../controllers/executions");
 const router = Router();
 
 router.post("/", createExecution);
