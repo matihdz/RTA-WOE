@@ -5,23 +5,26 @@ const canvaslmsURL = process.env.CANVASLMS_URL;
 const canvaslmsToken = process.env.CANVASLMS_TOKEN;
 
 const canvasPolling = async (tag) => {
-  // Realizar el polling a la API de CanvasLMS hasta obtener el resultado deseado
-  switch (tag) {
-    case "crear_actividad":
-      let intervalId = setInterval(() => {
-        let assignments = getCanvasAssignments(intervalId);
-        if (assignments) return assignments;
-      }, 3000);
-      break;
+  return new Promise((resolve, reject) => {
+    // Realizar el polling a la API de CanvasLMS hasta obtener el resultado deseado
+    switch (tag) {
+      case "crear_actividad":
+        let intervalId = setInterval(async () => {
+          let assignments = await getCanvasAssignments(intervalId);
+          if (assignments) resolve(assignments);
+        }, 3000);
+        break;
 
-    case "cerrar_actividad":
-      break;
+      case "cerrar_actividad":
+        // Aquí puedes manejar la lógica para cerrar actividad
+        break;
 
-    default:
-      break;
-  }
-
-  return null;
+      default:
+        reject("El tag no es válido");
+        break;
+    }
+    reject("No se encontró el resultado");
+  });
 };
 
 const getCanvasAssignments = async (intervalId) => {
@@ -48,10 +51,7 @@ const getCanvasAssignments = async (intervalId) => {
 };
 
 const stopPolling = (intervalId) => {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
+  if (intervalId) clearInterval(intervalId);
 };
 
 module.exports = {
