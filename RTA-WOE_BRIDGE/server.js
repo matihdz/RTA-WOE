@@ -16,6 +16,7 @@ class Server {
       },
       case_id: "2",
       example: "example",
+      externalEvent: {},
     };
 
     //Middlewares
