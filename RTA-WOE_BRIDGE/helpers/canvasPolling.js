@@ -57,9 +57,12 @@ const canvasPolling = async (tag, externalEvent = {}) => {
 
       case "asignar_notas_finales":
         if (!externalEvent?.submission?.id) reject("No se recibió la entrega a evaluar desde la tarea SFN");
+        const {
+          submission: { user_id, assignment_id },
+        } = externalEvent;
 
         intervalId = setInterval(async () => {
-          const submission = await getSubmissions(intervalId, [externalEvent.submission.user_id], [externalEvent.submission.assignment_id], (submissions) => {
+          const submission = await getSubmissions(intervalId, [user_id], [assignment_id], (submissions) => {
             console.log("Evaluando entrega grupal...");
             // Verificar que la entrega esté evaluada
             if (submissions.every((submission) => !!submission.grade)) return true;
