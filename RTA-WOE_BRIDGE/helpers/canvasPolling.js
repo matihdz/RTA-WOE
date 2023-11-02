@@ -10,20 +10,64 @@ const canvasPolling = async (tag, externalEvent = {}) => {
   return new Promise((resolve, reject) => {
     // Realizar el polling a la API de CanvasLMS hasta obtener el resultado deseado
     switch (tag) {
-      case "crear_actividad":
+      case "desarrollar_actividad_cronometrojava":
         intervalId = setInterval(async () => {
-          const assignment = await getCanvasLastPublishedAssignment(intervalId);
-          if (assignment?.id) resolve({ ok: true, externalEvent: { assignment } });
+          const submissions = await getSubmissions(intervalId, [9, 10, 11], [23], (submissions) => {
+            console.log("Verificando entregas...");
+            // Verificar que todas las entregas estén enviadas
+            if (submissions.every((submission) => !!submission.submitted_at)) return true;
+            return false;
+          });
+          if (submissions && submissions.length) resolve({ ok: true, externalEvent: { submissions } });
         }, 3000);
         break;
 
-      case "cerrar_actividad":
-        if (!externalEvent?.assignment?.id) reject("No se encontró el id de la actividad");
+      case "evaluar_actividad_cronometrojava":
+        if (!externalEvent?.submissions?.length) reject("No se recibieron entregas desde la tarea SFN");
 
         intervalId = setInterval(async () => {
-          const assignment = await getCanvasUnpublishedAssignment(intervalId, externalEvent.assignment.id);
-          if (assignment?.id) resolve({ ok: true, externalEvent: { assignment } });
+          const submissions = await getSubmissions(intervalId, [9, 10, 11], [23], (submissions) => {
+            console.log("Evaluando entregas...");
+            // Verificar que todas las entregas estén evaluadas
+            if (submissions.every((submission) => !!submission.grade)) return true;
+            return false;
+          });
+          if (submissions && submissions.length) resolve({ ok: true, externalEvent: { submissions } });
         }, 3000);
+        break;
+
+      case "desarrollar_actividad_huntthewumpus":
+        if (!externalEvent?.submissions?.length) reject("No se recibieron entregas desde la tarea SFN");
+
+        intervalId = setInterval(async () => {
+          const students = await getStudentsPerGroup(3);
+          if (!students || !students.length) return null;
+          const students_ids = students.map((student) => student.id);
+
+          const submissions = await getSubmissions(intervalId, students_ids, [22], (submissions) => {
+            console.log("Verificando entrega grupal...");
+            // Verificar que todas las entregas estén enviadas
+            if (submissions.some((submission) => submission.submitted_at)) return true;
+            return false;
+          });
+          const submissionToEvaluate = submissions.find((submission) => !!submission.submitted_at);
+          if (submissionToEvaluate?.id) resolve({ ok: true, externalEvent: { submission: submissionToEvaluate } });
+        }, 3000);
+        break;
+
+      case "asignar_notas_finales":
+        if (!externalEvent?.submission?.id) reject("No se recibió la entrega a evaluar desde la tarea SFN");
+
+        intervalId = setInterval(async () => {
+          const submission = await getSubmissions(intervalId, [externalEvent.submission.user_id], [externalEvent.submission.assignment_id], (submissions) => {
+            console.log("Evaluando entrega grupal...");
+            // Verificar que la entrega esté evaluada
+            if (submissions.every((submission) => !!submission.grade)) return true;
+            return false;
+          });
+          if (submission && submission.length) resolve({ ok: true, externalEvent: { submission } });
+        }, 3000);
+
         break;
 
       default:
@@ -34,58 +78,52 @@ const canvasPolling = async (tag, externalEvent = {}) => {
 };
 
 // Obtener la última actividad publicada en CanvasLMS
-const getCanvasLastPublishedAssignment = async (intervalId) => {
+const getSubmissions = async (intervalId, student_ids = [], assignment_ids = [], verifyFn) => {
   try {
     if (!intervalId) throw new Error("Se requiere un intervalId para realizar el polling");
+    if (!student_ids.length) throw new Error("Se requiere al menos un student_id");
+    if (!assignment_ids.length) throw new Error("Se requiere al menos un assignment_id");
 
-    console.log("Polling actividades publicadas...");
-    const response = await axios.get(`${canvaslmsURL}/api/v1/courses/${canvaslmsCourseId}/assignments`, {
+    const response = await axios.get(`${canvaslmsURL}/api/v1/courses/${canvaslmsCourseId}/students/submissions`, {
       headers: {
         Authorization: `Bearer ${canvaslmsToken}`,
       },
+      params: {
+        student_ids: student_ids,
+        assignment_ids: assignment_ids,
+      },
     });
-    let assignments = response.data;
-    if (!assignments || !assignments.length) return null;
+    let submissions = response.data;
+    if (!submissions || !submissions.length) return null;
 
-    assignments = assignments.filter((assignment) => assignment.workflow_state == "published");
-    if (!assignments || !assignments.length) return null;
-
-    // Obtener la última actividad publicada segun el created_at
-    let lastAssignment = assignments[0];
-    if (assignments.length > 1) {
-      lastAssignment = assignments.find((assignment) => assignment.created_at > lastAssignment.created_at) || lastAssignment;
-    }
+    if (verifyFn && !verifyFn(submissions)) return null;
 
     stopPolling(intervalId);
-    console.log("Actividad encontrada ID: ", lastAssignment?.id);
-    return lastAssignment;
+    return submissions;
   } catch (error) {
     stopPolling(intervalId);
-    console.error("Error al intentar obtener actividades publicadas:", error);
+    console.error("Error al intentar obtener entregas: ", error);
     return null;
   }
 };
 
-// Verificar que la actividad se haya cerrado en CanvasLMS
-const getCanvasUnpublishedAssignment = async (intervalId, assignmentId) => {
+// Obtener los estudiantes de un grupo
+const getStudentsPerGroup = async (group_id) => {
   try {
-    if (!intervalId) throw new Error("Se requiere un intervalId para realizar el polling");
+    if (!group_id) throw new Error("Se requiere un group_id para obtener los estudiantes");
 
-    console.log("Polling actividad cerrada...");
-    const response = await axios.get(`${canvaslmsURL}/api/v1/courses/${canvaslmsCourseId}/assignments/${assignmentId}`, {
+    const response = await axios.get(`${canvaslmsURL}/api/v1/groups/${group_id}/users`, {
       headers: {
         Authorization: `Bearer ${canvaslmsToken}`,
       },
     });
-    let assignment = response.data;
-    if (!assignment || !assignment.id || assignment?.workflow_state != "unpublished") return null;
 
-    stopPolling(intervalId);
-    console.log("Actividad cerrada encontrada ID: ", assignmentId);
-    return assignment;
+    let students = response.data;
+    if (!students || !students.length) return null;
+
+    return students;
   } catch (error) {
-    stopPolling(intervalId);
-    console.error("Error al intentar obtener actividad cerrada:", error);
+    console.error("Error al intentar obtener estudiantes: ", error);
     return null;
   }
 };
