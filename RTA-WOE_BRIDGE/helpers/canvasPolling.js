@@ -32,13 +32,14 @@ const canvasPolling = async (tag, externalEvent = {}) => {
             if (submissions.every((submission) => !!submission.grade)) return true;
             return false;
           });
-          if (submissions && submissions.length) resolve({ ok: true, externalEvent: { submissions } });
+          if (submissions && submissions.length) {
+            const assignment = await publishAssignment(intervalId, 22);
+            if (assignment?.id) resolve({ ok: true, externalEvent: { submissions } });
+          }
         }, 3000);
         break;
 
       case "desarrollar_actividad_huntthewumpus":
-        if (!externalEvent?.submissions?.length) reject("No se recibieron entregas desde la tarea SFN");
-
         intervalId = setInterval(async () => {
           const students = await getStudentsPerGroup(3);
           if (!students || !students.length) return null;
@@ -50,6 +51,8 @@ const canvasPolling = async (tag, externalEvent = {}) => {
             if (submissions.some((submission) => submission.submitted_at)) return true;
             return false;
           });
+          if (!submissions || !submissions.length) return null;
+
           const submissionToEvaluate = submissions.find((submission) => !!submission.submitted_at);
           if (submissionToEvaluate?.id) resolve({ ok: true, externalEvent: { submission: submissionToEvaluate } });
         }, 3000);
@@ -78,6 +81,37 @@ const canvasPolling = async (tag, externalEvent = {}) => {
         break;
     }
   });
+};
+
+// Publicar una actividad en CanvasLMS
+const publishAssignment = async (intervalId, assignment_id) => {
+  try {
+    if (!intervalId) throw new Error("Se requiere un intervalId para realizar el polling");
+    if (!assignment_id) throw new Error("Se requiere un assignment_id para publicar la actividad");
+
+    const response = await axios.put(
+      `${canvaslmsURL}/api/v1/courses/${canvaslmsCourseId}/assignments/${assignment_id}`,
+      {
+        assignment: {
+          published: true,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${canvaslmsToken}`,
+        },
+      }
+    );
+
+    let assignment = response.data;
+    if (!assignment) return null;
+
+    return assignment;
+  } catch (error) {
+    stopPolling(intervalId);
+    console.error("Error al intentar publicar la actividad: ", error);
+    return null;
+  }
 };
 
 // Obtener la última actividad publicada en CanvasLMS

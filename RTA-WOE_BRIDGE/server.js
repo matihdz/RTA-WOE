@@ -15,7 +15,7 @@ class Server {
         user_id: "12345",
       },
       case_id: "2",
-      example: "example",
+      example: "aprobar_reprobar",
       externalEvent: {},
     };
 
