@@ -4,48 +4,58 @@ const canvaslmsCourseId = "1"; //ID del Curso de Programación
 const canvaslmsURL = process.env.CANVASLMS_URL;
 const canvaslmsToken = process.env.CANVASLMS_TOKEN;
 
-const canvasPolling = async (tag, externalEvent = {}) => {
-  let intervalId = null;
+const estudiante1Id = 9;
+const estudiante2Id = 10;
+const estudiante3Id = 11;
+const actividadCronometroId = 24;
+const actividadHuntTheWumpusId = 25;
+const actividadCalculadoraId = 26;
+const actividadQuemadosId = 27;
+const group1Id = 3;
 
-  return new Promise((resolve, reject) => {
+const canvasPolling = async (tag, inputs = {}) => {
+  let intervalId = null;
+  let assignment = null;
+
+  return new Promise(async (resolve, reject) => {
     // Realizar el polling a la API de CanvasLMS hasta obtener el resultado deseado
     switch (tag) {
-      case "desarrollar_actividad_cronometrojava":
+      case "desarrollar_actividad_cronometrojava": // Individual
         intervalId = setInterval(async () => {
-          const submissions = await getSubmissions(intervalId, [9, 10, 11], [23], (submissions) => {
+          const submissions = await getSubmissions(intervalId, [estudiante1Id, estudiante2Id, estudiante3Id], [actividadCronometroId], (submissions) => {
             console.log("Verificando entregas...");
             // Verificar que todas las entregas estén enviadas
             if (submissions.every((submission) => !!submission.submitted_at)) return true;
             return false;
           });
-          if (submissions && submissions.length) resolve({ ok: true, externalEvent: { submissions } });
+          if (submissions && submissions.length) resolve({ ok: true, inputs: { submissions } });
         }, 3000);
         break;
 
       case "evaluar_actividad_cronometrojava":
-        if (!externalEvent?.submissions?.length) reject("No se recibieron entregas desde la tarea SFN");
+        if (!inputs?.submissions?.length) reject("No se recibieron entregas desde la tarea SFN");
 
         intervalId = setInterval(async () => {
-          const submissions = await getSubmissions(intervalId, [9, 10, 11], [23], (submissions) => {
+          const submissions = await getSubmissions(intervalId, [estudiante1Id, estudiante2Id, estudiante3Id], [actividadCronometroId], (submissions) => {
             console.log("Evaluando entregas...");
             // Verificar que todas las entregas estén evaluadas
             if (submissions.every((submission) => !!submission.grade)) return true;
             return false;
           });
-          if (submissions && submissions.length) {
-            const assignment = await publishAssignment(intervalId, 22);
-            if (assignment?.id) resolve({ ok: true, externalEvent: { submissions } });
-          }
+          if (submissions && submissions.length) resolve({ ok: true, inputs: { submissions } });
         }, 3000);
         break;
 
-      case "desarrollar_actividad_huntthewumpus":
+      case "desarrollar_actividad_huntthewumpus": // Grupal
+        assignment = await publishAssignment(intervalId, actividadHuntTheWumpusId);
+        if (!assignment?.id) reject("No se pudo publicar la actividad 'Hunt The Wumpus'");
+
         intervalId = setInterval(async () => {
-          const students = await getStudentsPerGroup(3);
+          const students = await getStudentsPerGroup(group1Id);
           if (!students || !students.length) return null;
           const students_ids = students.map((student) => student.id);
 
-          const submissions = await getSubmissions(intervalId, students_ids, [22], (submissions) => {
+          const submissions = await getSubmissions(intervalId, students_ids, [actividadHuntTheWumpusId], (submissions) => {
             console.log("Verificando entrega grupal...");
             // Verificar que todas las entregas estén enviadas
             if (submissions.some((submission) => submission.submitted_at)) return true;
@@ -54,33 +64,102 @@ const canvasPolling = async (tag, externalEvent = {}) => {
           if (!submissions || !submissions.length) return null;
 
           const submissionToEvaluate = submissions.find((submission) => !!submission.submitted_at);
-          if (submissionToEvaluate?.id) resolve({ ok: true, externalEvent: { submission: submissionToEvaluate } });
+          if (submissionToEvaluate?.id) resolve({ ok: true, inputs: { submission: submissionToEvaluate } });
         }, 3000);
         break;
 
       case "asignar_notas_finales":
-        if (!externalEvent?.submission?.id) reject("No se recibió la entrega a evaluar desde la tarea SFN");
-        const {
-          submission: { user_id, assignment_id },
-        } = externalEvent;
+        if (!inputs?.submission?.id) reject("No se recibió la entrega a evaluar desde la tarea SFN");
 
         intervalId = setInterval(async () => {
-          const submission = await getSubmissions(intervalId, [user_id], [assignment_id], (submissions) => {
+          const submission = await getSubmissions(intervalId, [inputs.submission.user_id], [inputs.submission.assignment_id], (submissions) => {
             console.log("Evaluando entrega grupal...");
             // Verificar que la entrega esté evaluada
             if (submissions.every((submission) => !!submission.grade)) return true;
             return false;
           });
-          if (submission && submission.length) resolve({ ok: true, externalEvent: { submission } });
+          if (submission && submission.length) resolve({ ok: true, inputs: { submission } });
         }, 3000);
 
         break;
+
+      case "modificar_grupos":
+        const group = await updateGroup(group1Id, [estudiante1Id, estudiante2Id]);
+
+        if (group?.id) resolve({ ok: true, inputs: { group } });
+        else reject({ ok: false, message: "No se pudo modificar el grupo" });
+
+        break;
+
+      case "desarrollar_actividad_calculadora": // Individual
+        assignment = await publishAssignment(intervalId, actividadCalculadoraId);
+        if (!assignment?.id) reject("No se pudo publicar la actividad 'Calculadora'");
+
+        intervalId = setInterval(async () => {
+          const submissions = await getSubmissions(intervalId, [estudiante3Id], [actividadCalculadoraId], (submissions) => {
+            console.log("Verificando entregas...");
+            // Verificar que todas las entregas estén enviadas
+            if (submissions.every((submission) => !!submission.submitted_at)) return true;
+            return false;
+          });
+          if (submissions && submissions.length) resolve({ ok: true, inputs: { submissions } });
+        }, 3000);
+        break;
+
+      case "desarrollar_actividad_quemados": // Grupal
+        assignment = await publishAssignment(intervalId, actividadQuemadosId);
+        if (!assignment?.id) reject("No se pudo publicar la actividad 'Quemados'");
+
+        intervalId = setInterval(async () => {
+          const students = await getStudentsPerGroup(group1Id);
+          if (!students || !students.length) return null;
+          const students_ids = students.map((student) => student.id);
+
+          const submissions = await getSubmissions(intervalId, students_ids, [actividadQuemadosId], (submissions) => {
+            console.log("Verificando entrega grupal...");
+            // Verificar que todas las entregas estén enviadas
+            if (submissions.some((submission) => submission.submitted_at)) return true;
+            return false;
+          });
+          if (!submissions || !submissions.length) return null;
+
+          const submissionToEvaluate = submissions.find((submission) => !!submission.submitted_at);
+          if (submissionToEvaluate?.id) resolve({ ok: true, inputs: { submission: submissionToEvaluate } });
+        }, 3000);
 
       default:
         reject({ ok: false, message: "No se encontró el tag" });
         break;
     }
   });
+};
+
+// Modificar un grupo en CanvasLMS
+const updateGroup = async (group_id, student_ids = []) => {
+  try {
+    if (!group_id) throw new Error("Se requiere un group_id para modificar el grupo");
+    if (!student_ids.length) throw new Error("Se requiere al menos un student_id");
+
+    const response = await axios.put(
+      `${canvaslmsURL}/api/v1/groups/${group_id}`,
+      {
+        members: student_ids,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${canvaslmsToken}`,
+        },
+      }
+    );
+
+    let group = response.data;
+    if (!group?.id) return null;
+
+    return group;
+  } catch (error) {
+    console.error("Error al intentar modificar el grupo: ", error);
+    return null;
+  }
 };
 
 // Publicar una actividad en CanvasLMS

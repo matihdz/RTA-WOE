@@ -18,9 +18,9 @@ const createExecution = async (req, res) => {
 
   // Realizar el polling a la API de CanvasLMS
   try {
-    const { ok, message = "", externalEvent = {} } = await canvasPolling(tag, event.externalEvent);
+    const { ok, message = "", inputs = {} } = await canvasPolling(tag, event.inputs);
     if (!ok) throw new Error(message);
-    canvasResult = { ...externalEvent };
+    canvasResult = { ...inputs };
     console.log("Resultado API canvas encontrado");
   } catch (error) {
     console.error("Error al realizar el polling:", error);
@@ -45,7 +45,7 @@ const createExecution = async (req, res) => {
   // Enviar el resultado a Step Functions
   try {
     // Agregar el resultado del polling al evento
-    event.externalEvent = { ...event.externalEvent, ...canvasResult };
+    event.inputs = { ...event.inputs, ...canvasResult };
 
     await stepfunctions
       .sendTaskSuccess({
