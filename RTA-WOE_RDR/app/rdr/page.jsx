@@ -14,7 +14,7 @@ const page = () => {
   }, []);
 
   const getRDRsData = async () => {
-    const query = await fetch(`https://6bvtk82sog.execute-api.us-east-1.amazonaws.com/rules/example/presentacion_ensayo`, {
+    const query = await fetch(`https://6bvtk82sog.execute-api.us-east-1.amazonaws.com/rules/example/aprobar_reprobar`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

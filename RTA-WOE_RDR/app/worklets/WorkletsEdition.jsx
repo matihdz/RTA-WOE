@@ -5,12 +5,12 @@ import { useModal } from "../context/ModalContext";
 
 const workletOptions = [
   {
-    ID: "arn:aws:states:us-east-1:344997692965:stateMachine:AV-Presentacion",
-    label: "Presentacion",
+    ID: "arn:aws:states:us-east-1:344997692965:stateMachine:AV-HuntTheWumpus",
+    label: "Grupo de estudiantes continuan con 'Hunt the Wumpus (3 integrantes)'",
   },
   {
-    ID: "arn:aws:states:us-east-1:344997692965:stateMachine:AV-Ensayo",
-    label: "Ensayo",
+    ID: "arn:aws:states:us-east-1:344997692965:stateMachine:AV-CalculadoraPy-QuemadosC",
+    label: "Estudiantes aprobados continuan con 'Calculadora en Python (2 integrantes)' , y restante con actividad de repaso 'Quemados en C (Individual)'",
   },
 ];
 

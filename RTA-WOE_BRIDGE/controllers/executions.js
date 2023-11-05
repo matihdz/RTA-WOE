@@ -27,7 +27,7 @@ const createExecution = async (req, res) => {
 
     stepfunctions
       .sendTaskFailure({
-        cause: `${error}`,
+        cause: `${error?.message || error}`,
         error: "PollingError",
         taskToken: token,
       })

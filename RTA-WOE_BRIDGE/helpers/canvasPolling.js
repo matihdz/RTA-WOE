@@ -8,14 +8,17 @@ const estudiante1Id = 9;
 const estudiante2Id = 10;
 const estudiante3Id = 11;
 const actividadCronometroId = 24;
-const actividadHuntTheWumpusId = 28;
+const actividadHuntTheWumpusId = 29;
 const actividadCalculadoraId = 26;
 const actividadQuemadosId = 27;
 const group1Id = 3;
 
+const pollingPeriod = 5000;
+
 const canvasPolling = async (tag, inputs = {}) => {
   let intervalId = null;
   let assignment = null;
+  console.log("Dato TAG desde canvasPolling: ", { tag });
 
   return new Promise(async (resolve, reject) => {
     // Realizar el polling a la API de CanvasLMS hasta obtener el resultado deseado
@@ -23,13 +26,13 @@ const canvasPolling = async (tag, inputs = {}) => {
       case "desarrollar_actividad_cronometrojava": // Individual
         intervalId = setInterval(async () => {
           const submissions = await getSubmissions(intervalId, [estudiante1Id, estudiante2Id, estudiante3Id], [actividadCronometroId], (submissions) => {
-            console.log("Verificando entregas...");
+            console.log("Verificando entregas individuales... (Cronometro)");
             // Verificar que todas las entregas estén enviadas
             if (submissions.every((submission) => !!submission.submitted_at)) return true;
             return false;
           });
           if (submissions && submissions.length) resolve({ ok: true, inputs: { submissions } });
-        }, 3000);
+        }, pollingPeriod);
         break;
 
       case "evaluar_actividad_cronometrojava":
@@ -37,7 +40,7 @@ const canvasPolling = async (tag, inputs = {}) => {
 
         intervalId = setInterval(async () => {
           const submissions = await getSubmissions(intervalId, [estudiante1Id, estudiante2Id, estudiante3Id], [actividadCronometroId], (submissions) => {
-            console.log("Evaluando entregas...");
+            console.log("Evaluando entregas individuales... (Cronometro)");
             // Verificar que todas las entregas estén evaluadas
             if (submissions.every((submission) => !!submission.grade)) return true;
             return false;
@@ -50,7 +53,7 @@ const canvasPolling = async (tag, inputs = {}) => {
                 students_approved: submissions.filter((submission) => submission.grade == "complete").length,
               },
             });
-        }, 3000);
+        }, pollingPeriod);
         break;
 
       case "desarrollar_actividad_huntthewumpus": // Grupal
@@ -63,7 +66,7 @@ const canvasPolling = async (tag, inputs = {}) => {
           const students_ids = students.map((student) => student.id);
 
           const submissions = await getSubmissions(intervalId, students_ids, [actividadHuntTheWumpusId], (submissions) => {
-            console.log("Verificando entrega grupal...");
+            console.log("Verificando entrega grupal... (HuntTheWumpus)");
             // Verificar que todas las entregas estén enviadas
             if (submissions.some((submission) => submission.submitted_at)) return true;
             return false;
@@ -72,7 +75,7 @@ const canvasPolling = async (tag, inputs = {}) => {
 
           const submissionToEvaluate = submissions.find((submission) => !!submission.submitted_at);
           if (submissionToEvaluate?.id) resolve({ ok: true, inputs: { submission: submissionToEvaluate } });
-        }, 3000);
+        }, pollingPeriod);
         break;
 
       case "asignar_notas_finales":
@@ -86,7 +89,7 @@ const canvasPolling = async (tag, inputs = {}) => {
             return false;
           });
           if (submission && submission.length) resolve({ ok: true, inputs: { submission } });
-        }, 3000);
+        }, pollingPeriod);
 
         break;
 
@@ -104,13 +107,13 @@ const canvasPolling = async (tag, inputs = {}) => {
 
         intervalId = setInterval(async () => {
           const submissions = await getSubmissions(intervalId, [estudiante3Id], [actividadCalculadoraId], (submissions) => {
-            console.log("Verificando entregas...");
+            console.log("Verificando entrega individual... (Calculadora)");
             // Verificar que todas las entregas estén enviadas
             if (submissions.every((submission) => !!submission.submitted_at)) return true;
             return false;
           });
           if (submissions && submissions.length) resolve({ ok: true, inputs: { submissions } });
-        }, 3000);
+        }, pollingPeriod);
         break;
 
       case "desarrollar_actividad_quemados": // Grupal
@@ -123,7 +126,7 @@ const canvasPolling = async (tag, inputs = {}) => {
           const students_ids = students.map((student) => student.id);
 
           const submissions = await getSubmissions(intervalId, students_ids, [actividadQuemadosId], (submissions) => {
-            console.log("Verificando entrega grupal...");
+            console.log("Verificando entrega grupal (Quemados)");
             // Verificar que todas las entregas estén enviadas
             if (submissions.some((submission) => submission.submitted_at)) return true;
             return false;
@@ -132,10 +135,10 @@ const canvasPolling = async (tag, inputs = {}) => {
 
           const submissionToEvaluate = submissions.find((submission) => !!submission.submitted_at);
           if (submissionToEvaluate?.id) resolve({ ok: true, inputs: { submission: submissionToEvaluate } });
-        }, 3000);
+        }, pollingPeriod);
 
       default:
-        reject({ ok: false, message: "No se encontró el tag" });
+        //reject({ ok: false, message: "No se encontró el tag" });
         break;
     }
   });

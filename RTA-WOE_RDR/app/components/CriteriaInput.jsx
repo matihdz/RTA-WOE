@@ -1,5 +1,5 @@
 const operators = ["==", "<=", ">", "<", "AND", "OR"];
-const variables = ["class_level", "students_per_group"];
+const variables = ["students_approved", "students_per_group"];
 
 const OperatorSelector = ({ value, onChange, disabled = false }) => (
   <div className="flex justify-between items-center">
