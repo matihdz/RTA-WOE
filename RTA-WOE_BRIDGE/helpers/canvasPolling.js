@@ -8,7 +8,7 @@ const estudiante1Id = 9;
 const estudiante2Id = 10;
 const estudiante3Id = 11;
 const actividadCronometroId = 24;
-const actividadHuntTheWumpusId = 25;
+const actividadHuntTheWumpusId = 28;
 const actividadCalculadoraId = 26;
 const actividadQuemadosId = 27;
 const group1Id = 3;
@@ -42,12 +42,19 @@ const canvasPolling = async (tag, inputs = {}) => {
             if (submissions.every((submission) => !!submission.grade)) return true;
             return false;
           });
-          if (submissions && submissions.length) resolve({ ok: true, inputs: { submissions } });
+          if (submissions && submissions.length)
+            resolve({
+              ok: true,
+              inputs: {
+                students_per_group: 3,
+                students_approved: submissions.filter((submission) => submission.grade == "complete").length,
+              },
+            });
         }, 3000);
         break;
 
       case "desarrollar_actividad_huntthewumpus": // Grupal
-        assignment = await publishAssignment(intervalId, actividadHuntTheWumpusId);
+        assignment = await publishAssignment(actividadHuntTheWumpusId);
         if (!assignment?.id) reject("No se pudo publicar la actividad 'Hunt The Wumpus'");
 
         intervalId = setInterval(async () => {
@@ -92,7 +99,7 @@ const canvasPolling = async (tag, inputs = {}) => {
         break;
 
       case "desarrollar_actividad_calculadora": // Individual
-        assignment = await publishAssignment(intervalId, actividadCalculadoraId);
+        assignment = await publishAssignment(actividadCalculadoraId);
         if (!assignment?.id) reject("No se pudo publicar la actividad 'Calculadora'");
 
         intervalId = setInterval(async () => {
@@ -107,7 +114,7 @@ const canvasPolling = async (tag, inputs = {}) => {
         break;
 
       case "desarrollar_actividad_quemados": // Grupal
-        assignment = await publishAssignment(intervalId, actividadQuemadosId);
+        assignment = await publishAssignment(actividadQuemadosId);
         if (!assignment?.id) reject("No se pudo publicar la actividad 'Quemados'");
 
         intervalId = setInterval(async () => {
@@ -163,9 +170,8 @@ const updateGroup = async (group_id, student_ids = []) => {
 };
 
 // Publicar una actividad en CanvasLMS
-const publishAssignment = async (intervalId, assignment_id) => {
+const publishAssignment = async (assignment_id, intervalId = null) => {
   try {
-    if (!intervalId) throw new Error("Se requiere un intervalId para realizar el polling");
     if (!assignment_id) throw new Error("Se requiere un assignment_id para publicar la actividad");
 
     const response = await axios.put(
@@ -187,7 +193,7 @@ const publishAssignment = async (intervalId, assignment_id) => {
 
     return assignment;
   } catch (error) {
-    stopPolling(intervalId);
+    if (intervalId) stopPolling(intervalId);
     console.error("Error al intentar publicar la actividad: ", error);
     return null;
   }
