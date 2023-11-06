@@ -9,14 +9,9 @@ class Server {
     this.port = process.env.PORT;
     this.stateMachineArn = process.env.AWS_STATE_MACHINE_ARN;
     this.inputStateMachine = {
-      inputs: {
-        students_per_group: 6,
-        class_level: "doctorado",
-        user_id: "12345",
-      },
+      inputs: {},
       case_id: "2",
       example: "aprobar_reprobar",
-      externalEvent: {},
     };
 
     //Middlewares
