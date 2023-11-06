@@ -7,13 +7,13 @@ const canvaslmsToken = process.env.CANVASLMS_TOKEN;
 const estudiante1Id = 9;
 const estudiante2Id = 10;
 const estudiante3Id = 11;
-const actividadCronometroId = 24;
-const actividadHuntTheWumpusId = 29;
-const actividadCalculadoraId = 26;
-const actividadQuemadosId = 27;
+const actividadCronometroId = 36;
+const actividadHuntTheWumpusId = 37;
+const actividadCalculadoraId = 40;
+const actividadQuemadosId = 41;
 const group1Id = 3;
 
-const pollingPeriod = 5000;
+const pollingPeriod = 10000;
 
 const canvasPolling = async (tag, inputs = {}) => {
   let intervalId = null;
@@ -74,18 +74,21 @@ const canvasPolling = async (tag, inputs = {}) => {
           if (!submissions || !submissions.length) return null;
 
           const submissionToEvaluate = submissions.find((submission) => !!submission.submitted_at);
-          if (submissionToEvaluate?.id) resolve({ ok: true, inputs: { submission: submissionToEvaluate } });
+          if (submissionToEvaluate?.id) resolve({ ok: true, inputs: { submissions: [submissionToEvaluate] } });
         }, pollingPeriod);
         break;
 
       case "asignar_notas_finales":
-        if (!inputs?.submission?.id) reject("No se recibió la entrega a evaluar desde la tarea SFN");
+        if (!inputs?.submissions?.length) reject("No se recibieron entregas desde la tarea SFN");
+
+        let users = inputs.submissions.map((submission) => submission.user_id);
+        let assignments = inputs.submissions.map((submission) => submission.assignment_id);
 
         intervalId = setInterval(async () => {
-          const submission = await getSubmissions(intervalId, [inputs.submission.user_id], [inputs.submission.assignment_id], (submissions) => {
-            console.log("Evaluando entrega grupal...");
+          const submission = await getSubmissions(intervalId, users, assignments, (subs) => {
+            console.log("Evaluando entregas... (Grupales e individuales)");
             // Verificar que la entrega esté evaluada
-            if (submissions.every((submission) => !!submission.grade)) return true;
+            if (subs.every((sub) => !!sub.grade)) return true;
             return false;
           });
           if (submission && submission.length) resolve({ ok: true, inputs: { submission } });
